@@ -1,28 +1,15 @@
 # TODO 文本预处理
-
 import collections
 import re
 import deep2learning as d2l
-import jieba
 
-# 读取数据集
-file_path = '../data/always_have_a_dream.txt'
-
-
-def read_poems(path):  # @save
-    """将时间机器数据集加载到文本行的列表中"""
-    with open(path, 'r') as f:
-        lines = f.readlines()
-    return [re.sub('[^A-Za-z]+', ' ', line).strip().lower() for line in lines]
-
-
-lines = read_poems(file_path)
+lines = d2l.read_time_machine()
 print(f'# 文本总行数: {len(lines)}')
+print(lines[0])
+print(lines[10])
 
-for i in lines:
-    print(i)
 
-
+# 词元化
 def tokenize(lines, token='word'):  # @save
     """将文本行拆分为单词或字符词元"""
     if token == 'word':
@@ -34,10 +21,11 @@ def tokenize(lines, token='word'):  # @save
 
 
 tokens = tokenize(lines)
-for i in range(5):
+for i in range(11):
     print(tokens[i])
 
 
+# 词表
 class Vocab:  # @save
     """文本词表"""
 
@@ -92,9 +80,30 @@ def count_corpus(tokens):  # @save
     return collections.Counter(tokens)
 
 
+"""
+tokens:每一行的单词序列
+"""
 vocab = Vocab(tokens)
-print(list(vocab.token_to_idx.items())[:5])
 
-for i in [0, 4]:
+print(list(vocab.token_to_idx.items())[:10])
+
+for i in [0, 10]:
     print('文本:', tokens[i])
     print('索引:', vocab[tokens[i]])
+
+
+def load_corpus_time_machine(max_tokens=-1):  # @save
+    """返回时光机器数据集的词元索引列表和词表"""
+    lines = d2l.read_time_machine()
+    tokens = tokenize(lines, 'char')
+    vocab = Vocab(tokens)
+    # 因为时光机器数据集中的每个文本行不一定是一个句子或一个段落，
+    # 所以将所有文本行展平到一个列表中
+    corpus = [vocab[token] for line in tokens for token in line]
+    if max_tokens > 0:
+        corpus = corpus[:max_tokens]
+    return corpus, vocab
+
+
+corpus, vocab = load_corpus_time_machine()
+print(len(corpus), len(vocab))

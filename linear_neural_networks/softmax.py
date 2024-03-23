@@ -1,11 +1,7 @@
 # softmax实现图片分类
-import matplotlib.pyplot as plt
+
 # 导包
 import torch
-import torchvision
-from torch.utils import data
-from torchvision import transforms
-from IPython import display
 import deep2learning as d2l
 
 # 读取数据集
@@ -13,17 +9,14 @@ batch_size = 256
 train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size)
 
 # 初始化模型参数
-num_inputs = 784
-num_outputs = 10
+num_inputs = 784  # 输入的特征数
+num_outputs = 10  # 输出维度
 
 W = torch.normal(0, 0.01, size=(num_inputs, num_outputs), requires_grad=True)
 b = torch.zeros(num_outputs, requires_grad=True)
 
+
 # 定义softmax操作
-X = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-X.sum(0, keepdim=True), X.sum(1, keepdim=True)
-
-
 def softmax(X):
     X_exp = torch.exp(X)
     partition = X_exp.sum(1, keepdim=True)
@@ -37,16 +30,9 @@ def net(X):
 
 
 # 定义损失函数
-y = torch.tensor([0, 2])
-y_hat = torch.tensor([[0.1, 0.3, 0.6], [0.3, 0.2, 0.5]])
-y_hat[[0, 1], y]
-
-
 def cross_entropy(y_hat, y):
     return - torch.log(y_hat[range(len(y_hat)), y])
 
-
-cross_entropy(y_hat, y)
 
 lr = 0.1
 
@@ -57,4 +43,19 @@ def updater(batch_size):
 
 num_epochs = 10
 d2l.train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs, updater)
-d2l.display_plt()
+d2l.plt.show()
+
+
+def predict_ch3(net, test_iter, n=6):  # @save
+    """预测标签（定义见第3章）"""
+    for X, y in test_iter:
+        break
+    trues = d2l.get_fashion_mnist_labels(y)
+    preds = d2l.get_fashion_mnist_labels(net(X).argmax(axis=1))
+    titles = [true + '\n' + pred for true, pred in zip(trues, preds)]
+    d2l.show_images(
+        X[0:n].reshape((n, 28, 28)), 1, n, titles=titles[0:n])
+
+
+predict_ch3(net, test_iter)
+d2l.plt.show()

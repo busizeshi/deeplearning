@@ -98,20 +98,20 @@ def split_train_test(img2id, val_rate=0.1):
 
 
 class DogDataset(Dataset):
-    def __init__(self, img2id, is_train=True, transform=None):
+    def __init__(self, img2id, mode='train', transform=None):
         self.img2id = img2id
-        self.is_train = is_train
-        if is_train:
+        self.mode = mode
+        if self.mode == 'train':
             self.transform = transform['train']
         else:
             self.transform = transform['test']
 
     def __getitem__(self, index):
-        img_path = list(self.img2id.items())[index][0]+".jpg"
+        img_path = list(self.img2id.items())[index][0] + ".jpg"
         label = list(self.img2id.items())[index][1]
         img = Image.open(img_path)
         img = self.transform(img)
-        if not self.is_train:
+        if self.mode == 'test':
             return img
         return img, torch.tensor(label)
 
@@ -119,13 +119,11 @@ class DogDataset(Dataset):
         return len(self.img2id)
 
 
-def get_dataloader(batch_size):
+def get_dataset():
     pd = get_csv(os.path.join(ROOT, 'labels.csv'))
     breed2id, id2breed = get_all_category(pd)
     img2id = get_all_image(pd, breed2id)
     train_img2id, val_img2id = split_train_test(img2id)
-    train_dataset = DogDataset(train_img2id, is_train=True, transform=transform)
-    val_dataset = DogDataset(val_img2id, is_train=False, transform=transform)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    return train_loader, val_loader
+    train_dataset = DogDataset(train_img2id, 'train', transform=transform)
+    val_dataset = DogDataset(val_img2id, 'train', transform=transform)
+    return train_dataset, val_dataset

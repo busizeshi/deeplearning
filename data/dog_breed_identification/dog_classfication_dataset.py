@@ -7,6 +7,7 @@ import random
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torch
+import torchvision
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 NUM_CATEGORY = 120
@@ -65,12 +66,11 @@ def get_all_category(df):
     return breed2id, id2breed
 
 
-def get_all_image(df, breed2id, id2breed):
+def get_all_image(df, breed2id):
     """
     获取所有图片地址与id的映射
     :param df:
     :param breed2id:
-    :param id2breed:
     :return:
     """
     record = df.values.tolist()
@@ -107,23 +107,25 @@ class DogDataset(Dataset):
             self.transform = transform['test']
 
     def __getitem__(self, index):
-        img_path = self.img2id[index].key()
-        label = self.img2id[index].value()
+        img_path = list(self.img2id.items())[index][0]+".jpg"
+        label = list(self.img2id.items())[index][1]
         img = Image.open(img_path)
         img = self.transform(img)
         if not self.is_train:
             return img
         return img, torch.tensor(label)
 
-
-def get_dataloader(train_dataset, val_dataset, batch_size):
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
-    return train_loader, val_loader
+    def __len__(self):
+        return len(self.img2id)
 
 
-if __name__ == '__main__':
+def get_dataloader(batch_size):
     pd = get_csv(os.path.join(ROOT, 'labels.csv'))
     breed2id, id2breed = get_all_category(pd)
-    ing2id = get_all_image(pd, breed2id, id2breed)
-    split_train_test(ing2id)
+    img2id = get_all_image(pd, breed2id)
+    train_img2id, val_img2id = split_train_test(img2id)
+    train_dataset = DogDataset(train_img2id, is_train=True, transform=transform)
+    val_dataset = DogDataset(val_img2id, is_train=False, transform=transform)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    return train_loader, val_loader
